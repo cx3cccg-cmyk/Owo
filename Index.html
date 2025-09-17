@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Lyrics Windows</title>
+<style>
+  :root{
+    --bg:#000;
+    --text:#fff;
+    --btn-bg:rgba(255,255,255,0.08);
+    --btn-border:rgba(255,255,255,0.12);
+  }
+  html,body{
+    height:100%;
+    margin:0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  .screen{
+    display:none;
+    height:100vh;
+    width:100vw;
+    padding:24px;
+    box-sizing:border-box;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+  }
+  .screen.active{ display:flex; }
+  .line{
+    text-align:center;
+    font-size:28px;
+    line-height:1.2;
+    max-width:920px;
+    padding:16px;
+    letter-spacing:0.2px;
+  }
+  .controls{
+    margin-top:32px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:center;
+  }
+  button{
+    background:var(--btn-bg);
+    color:var(--text);
+    border:1px solid var(--btn-border);
+    padding:12px 22px;
+    font-size:16px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  button:active{ transform:scale(.99); }
+  .count{
+    opacity:0.6;
+    font-size:14px;
+  }
+
+  /* pequeña animación */
+  .line{ transform: translateY(12px); opacity:0; transition: all 300ms ease; }
+  .screen.active .line{ transform: translateY(0); opacity:1; }
+
+  /* soporte para modos pequeños */
+  @media (max-width:420px){
+    .line{ font-size:20px; padding:12px; }
+    button{ padding:10px 18px; font-size:15px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Pantallas generadas por JS; dejamos un contenedor -->
+<div id="root"></div>
+
+<script>
+(() => {
+  // Lista con las frases en el orden exacto pedido
+  const lines = [
+    "I don't really wanna go right now",
+    "I just really wanna die right now",
+    "Nothing for me on this Earth",
+    "I've been fucked up since my birth",
+    "Break my legs, hurt me bad",
+    "Make me cry, I'm so sad",
+    "Break my legs, hurt me bad",
+    "Make me cry, I'm so sad"
+  ];
+
+  const root = document.getElementById('root');
+
+  // Crea una "pantalla" por cada linea
+  lines.forEach((text, idx) => {
+    const s = document.createElement('section');
+    s.className = 'screen';
+    s.id = 'screen-' + idx;
+
+    const lineEl = document.createElement('div');
+    lineEl.className = 'line';
+    // Si quieres que rompa líneas en palabras largas, usamos <p>
+    lineEl.innerText = text;
+
+    const controls = document.createElement('div');
+    controls.className = 'controls';
+
+    const count = document.createElement('div');
+    count.className = 'count';
+    count.innerText = `${idx + 1} / ${lines.length}`;
+
+    const btnClose = document.createElement('button');
+    btnClose.type = 'button';
+    btnClose.innerText = 'Cerrar';
+    btnClose.addEventListener('click', () => {
+      // Al "cerrar" ocultamos la actual y mostramos la siguiente
+      s.classList.remove('active');
+      const next = document.getElementById('screen-' + (idx + 1));
+      if (next) {
+        // pequeña espera para dar sensación de cierre/abrir
+        setTimeout(() => {
+          next.classList.add('active');
+          // intentamos desplazar arriba para que todo sea full screen
+          window.scrollTo({top:0, left:0, behavior:'instant'});
+        }, 120);
+      } else {
+        // si no hay siguiente, cerramos la "app": mostramos mensaje final y dejamos opción de reiniciar
+        showFinal();
+      }
+    });
+
+    controls.appendChild(count);
+    controls.appendChild(btnClose);
+
+    s.appendChild(lineEl);
+    s.appendChild(controls);
+    root.appendChild(s);
+  });
+
+  // Pantalla final
+  function showFinal(){
+    const final = document.createElement('section');
+    final.className = 'screen active';
+    const lineEl = document.createElement('div');
+    lineEl.className = 'line';
+    lineEl.innerText = 'hola sorro';
+    const controls = document.createElement('div');
+    controls.className = 'controls';
+    const btnRestart = document.createElement('button');
+    btnRestart.innerText = 'Volver a empezar';
+    btnRestart.addEventListener('click', () => {
+      // reinicia mostrando la primera pantalla
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      const first = document.getElementById('screen-0');
+      if (first) first.classList.add('active');
+      final.remove();
+    });
+    controls.appendChild(btnRestart);
+    final.appendChild(lineEl);
+    final.appendChild(controls);
+    root.appendChild(final);
+  }
+
+  // Arrancar mostrando la primera
+  const first = document.getElementById('screen-0');
+  if (first) first.classList.add('active');
+
+  // Para mejorar comportamiento "app-like" evitamos que el doble toque haga zoom
+  let lastTouch = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouch <= 300) e.preventDefault();
+    lastTouch = now;
+  }, {passive:false});
+})();
+</script>
+</body>
+</html>
